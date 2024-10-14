@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2D & 3D Drawing App with Library</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(120deg, #ff9a9e, #fad0c4);
+      overflow: hidden;
+    }
+
+    h1 {
+      text-align: center;
+      color: #fff;
+      margin-top: 20px;
+      animation: fadeIn 2s ease-in-out;
+    }
+
+    #toolbar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      background: #ff6f61;
+      padding: 10px;
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 10;
+      animation: slideDown 1s ease-in-out;
+    }
+
+    .tool {
+      padding: 10px 15px;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: white;
+      border-radius: 8px;
+      transition: transform 0.3s, box-shadow 0.3s;
+      background-color: #ff6f61;
+    }
+
+    .tool:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+
+    #colorPicker {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 3px solid white;
+      cursor: pointer;
+    }
+
+    #brushSize {
+      width: 60px;
+      padding: 5px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background: white;
+      border: 5px solid #ff6f61;
+      border-radius: 10px;
+      margin-top: 80px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    }
+
+    #webgl {
+      display: none;
+      width: 100vw;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 5;
+    }
+
+    #menuToggle {
+      background-color: #f67280;
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      padding: 10px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 0.3s;
+      z-index: 100;
+    }
+
+    #menuToggle:hover {
+      transform: rotate(180deg);
+    }
+
+    #menu {
+      position: fixed;
+      top: 0;
+      left: -250px;
+      width: 250px;
+      height: 100%;
+      background-color: #6c5b7b;
+      transition: left 0.5s ease;
+      z-index: 101;
+      padding-top: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+
+    #menu.open {
+      left: 0;
+    }
+
+    #menu ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    #menu ul li {
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    #menu ul li a {
+      color: white;
+      text-decoration: none;
+      font-size: 18px;
+      padding: 10px;
+      display: inline-block;
+      transition: background-color 0.3s;
+    }
+
+    #menu ul li a:hover {
+      background-color: #c06c84;
+    }
+
+    #saveBtn, #importBtn {
+      padding: 8px 20px;
+      background-color: #ff847c;
+    }
+
+    #eraserBtn {
+      background-color: #f67280;
+    }
+
+    #brushBtn {
+      background-color: #6c5b7b;
+    }
+
+    #clearBtn {
+      background-color: #c06c84;
+    }
+
+    #toggle3D {
+      background-color: #f8b400;
+      padding: 8px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    #library {
+      display: none;
+      position: absolute;
+      top: 80px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow-y: auto;
+      padding: 20px;
+      background-color: white;
+      border-radius: 10px;
+    }
+
+    #library img {
+      width: 200px;
+      height: auto;
+      margin: 10px;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    #library img:hover {
+      transform: scale(1.05);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideDown {
+      from {
+        transform: translateY(-100px);
+      }
+      to {
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>2D Drawing App 🎨</h1>
+
+  <div id="toolbar">
+    <input type="color" id="colorPicker" title="Pick a color">
+    <select id="brushSize" title="Brush Size">
+      <option value="2">Thin</option>
+      <option value="5">Medium</option>
+      <option value="10">Thick</option>
+    </select>
+    <button id="eraserBtn" class="tool">Eraser</button>
+    <button id="brushBtn" class="tool">Brush</button>
+    <button id="clearBtn" class="tool">Clear</button>
+    <input type="file" id="importBtn" class="tool" accept="image/*">
+    <button id="saveBtn" class="tool">Save</button>
+    <button id="toggle3D" class="tool">Switch to 3D</button>
+  </div>
+
+  <canvas id="canvas2D" width="800" height="600"></canvas>
+
+  <div id="menuToggle">☰</div>
+
+  <div id="menu">
+    <ul>
+      <li><a href="#" id="drawingPageBtn">Drawing Page</a></li>
+      <li><a href="#" id="libraryBtn">Library</a></li>
+    </ul>
+  </div>
+
+  <div id="library"></div>
+
+  <script>
+    const canvas2D = document.getElementById('canvas2D');
+    const ctx2D = canvas2D.getContext('2d');
+    const colorPicker = document.getElementById('colorPicker');
+    const brushSize = document.getElementById('brushSize');
+    const menuToggle = document.getElementById('menuToggle');
+    const menu = document.getElementById('menu');
+    const librarySection = document.getElementById('library');
+    const drawingsKey = 'drawings';
+    let savedDrawings = JSON.parse(localStorage.getItem(drawingsKey)) || [];
+    let currentColor = colorPicker.value;
+    let currentTool = 'brush';
+    let isDrawing = false;
+
+    // Open/Close the Menu
+    menuToggle.addEventListener('click', () => {
+      menu.classList.toggle('open');
+    });
+
+    // Switch to Drawing Page
+    document.getElementById('drawingPageBtn').addEventListener('click', () => {
+      librarySection.style.display = 'none';
+      canvas2D.style.display = 'block';
+      menu.classList.remove('open');
+    });
+
+    // Open Library
+    document.getElementById('libraryBtn').addEventListener('click', () => {
+      loadLibrary();
+      canvas2D.style.display = 'none';
+      librarySection.style.display = 'block';
+      menu.classList.remove('open');
+    });
+
+    // Brush Tool
+    document.getElementById('brushBtn').addEventListener('click', () => {
+      currentTool = 'brush';
+      currentColor = colorPicker.value;
+    });
+
+    // Eraser Tool
+    document.getElementById('eraserBtn').addEventListener('click', () => {
+      currentTool = 'eraser';
+      currentColor = '#ffffff'; // Erase with white
+    });
+
+    // Clear Canvas
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      ctx2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
+    });
+
+    // Image Upload to Canvas
+    document.getElementById('importBtn').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const img = new Image();
+        img.onload = () => {
+          ctx2D.drawImage(img, 0, 0, canvas2D.width, canvas2D.height);
+        };
+        img.src = URL.createObjectURL(file);
+      }
+    });
+
+    // Save Drawing to Local Storage
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      const drawing = canvas2D.toDataURL();
+      savedDrawings.push(drawing);
+      localStorage.setItem(drawingsKey, JSON.stringify(savedDrawings));
+      alert('Drawing saved to library!');
+    });
+
+    // Mouse/Touch Events for Drawing
+    canvas2D.addEventListener('mousedown', startDrawing);
+    canvas2D.addEventListener('mouseup', stopDrawing);
+    canvas2D.addEventListener('mousemove', draw);
+    canvas2D.addEventListener('touchstart', startDrawing);
+    canvas2D.addEventListener('touchend', stopDrawing);
+    canvas2D.addEventListener('touchmove', draw);
+
+    function startDrawing(e) {
+      isDrawing = true;
+      draw(e);
+    }
+
+    function stopDrawing() {
+      isDrawing = false;
+      ctx2D.beginPath();
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+
+      ctx2D.lineWidth = brushSize.value;
+      ctx2D.lineCap = 'round';
+      ctx2D.strokeStyle = currentColor;
+
+      const rect = canvas2D.getBoundingClientRect();
+      const x = e.clientX ? e.clientX - rect.left : e.touches[0].clientX - rect.left;
+      const y = e.clientY ? e.clientY - rect.top : e.touches[0].clientY - rect.top;
+
+      ctx2D.lineTo(x, y);
+      ctx2D.stroke();
+      ctx2D.beginPath();
+      ctx2D.moveTo(x, y);
+    }
+
+    // Load Saved Drawings into Library
+    function loadLibrary() {
+      librarySection.innerHTML = '<h2>Your Saved Drawings</h2>';
+      savedDrawings.forEach((drawing, index) => {
+        const img = document.createElement('img');
+        img.src = drawing;
+        img.addEventListener('click', () => loadDrawing(index));
+        librarySection.appendChild(img);
+      });
+    }
+
+    // Load Drawing from Library
+    function loadDrawing(index) {
+      const img = new Image();
+      img.src = savedDrawings[index];
+      img.onload = function () {
+        ctx2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
+        ctx2D.drawImage(img, 0, 0);
+      };
+      document.getElementById('drawingPageBtn').click(); // Switch back to drawing page
+    }
+  </script>
+
+</body>
+</html>
